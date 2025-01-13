@@ -1,0 +1,40 @@
+{
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "apps",
+  "projects": {
+    "etl": {
+      "type": "application",
+      "root": "apps/etl",
+      "entryFile": "main",
+      "sourceRoot": "apps/etl/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/etl/tsconfig.app.json"
+      }
+    },
+    "web-service": {
+      "type": "application",
+      "root": "apps/web-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/web-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/web-service/tsconfig.app.json"
+      }
+    },
+    "common": {
+      "type": "library",
+      "root": "libs/common",
+      "sourceRoot": "libs/common/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/common/tsconfig.lib.json"
+      }
+    },
+    "db": {
+      "type": "library",
+      "root": "libs/db",
+      "sourceRoot": "libs/db/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/db/tsconfig.lib.json"
+      }
+    }
+  }
+}
