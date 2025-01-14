@@ -5,7 +5,11 @@
       "@libs/common": ["libs/common/src"],
       "@libs/common/*": ["libs/common/src/*"],
       "@libs/db": ["libs/db/src"],
-      "@libs/db/*": ["libs/db/src/*"]
+      "@libs/db/*": ["libs/db/src/*"],
+      "@libs/llm": ["libs/llm/src"],
+      "@libs/llm/*": ["libs/llm/src/*"],
+      "@libs/scraper": ["libs/scraper/src"],
+      "@libs/scraper/*": ["libs/scraper/src/*"],
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
