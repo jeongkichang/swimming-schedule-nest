@@ -2,10 +2,10 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@app/common": ["libs/common/src"],
-      "@app/common/*": ["libs/common/src/*"],
-      "@app/db": ["libs/db/src"],
-      "@app/db/*": ["libs/db/src/*"]
+      "@libs/common": ["libs/common/src"],
+      "@libs/common/*": ["libs/common/src/*"],
+      "@libs/db": ["libs/db/src"],
+      "@libs/db/*": ["libs/db/src/*"]
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,

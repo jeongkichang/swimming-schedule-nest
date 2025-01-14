@@ -1,13 +1,17 @@
-import { Controller, Get, Param } from '@nestjs/common';
-import { DbService } from '@app/db';
+import { Controller, Get } from '@nestjs/common';
+import { DbService } from '@libs/db';
+import { Collection } from 'mongodb';
 
 @Controller()
 export class WebController {
     constructor(private readonly dbService: DbService) {}
 
-    @Get('item/:id')
-    async getItem(@Param('id') id: string) {
-        const data = await this.dbService.findOneById(id);
-        return data;
+    @Get()
+    async getData() {
+        const db = this.dbService.getDatabase();
+        const collection: Collection = db.collection('swimming_pool');
+
+        const data = await collection.find().toArray();
+        return { data };
     }
 }

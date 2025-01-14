@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { DbService } from '@app/db';
-// import { SomeCommonUtil } from '@app/common'; // 공통 유틸 예시
+import { DbService } from '@libs/db';
+import { Collection } from 'mongodb';
 
 @Injectable()
 export class EtlService {
@@ -9,20 +9,18 @@ export class EtlService {
 
     constructor(private readonly dbService: DbService) {}
 
-    @Cron(CronExpression.EVERY_5_MINUTES)
-    async handleCron() {
-        this.logger.log('ETL Job Started');
+    @Cron(CronExpression.EVERY_5_SECONDS)
+    async handleCronJob() {
+        this.logger.log('Running ETL Cron Job...');
 
-        // const rows = await this.dbService.getDataFromMongo();
-        //
-        // for (const row of rows) {
-        //     const html = await SomeCommonUtil.getHtml(row.url);
-        //     const cleanText = SomeCommonUtil.stripHtmlTags(html);
-        //     const extracted = await SomeCommonUtil.callGeminiLLM(cleanText);
-        //     // extracted → JSON 형태라고 가정
-        //     await this.dbService.insertDataToMongo(extracted);
-        // }
+        const db = this.dbService.getDatabase();
+        const collection: Collection = db.collection('swimming_pool');
 
-        this.logger.log('ETL Job Finished');
+        const result = await collection.find({}).toArray();
+        this.logger.log(`Found ${result.length} transaction(s).`);
+
+        console.log(result);
+
+        this.logger.log('ETL Cron Job completed.');
     }
 }
