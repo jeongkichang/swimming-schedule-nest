@@ -25,7 +25,6 @@ export class ScraperService {
         });
 
         const extractedText = $.text();
-        console.log(extractedText.trim());
         return extractedText.trim();
     }
 

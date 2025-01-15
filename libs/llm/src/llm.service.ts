@@ -47,13 +47,10 @@ export class LlmService {
         try {
             const result = await this.model.generateContent(prompt);
 
-            const text = result?.response?.text
+            return result?.response?.text
                 ? result.response.text()
                 : 'No response text.';
 
-            console.log(text);
-
-            return text;
         } catch (err) {
             this.logger.error('Gemini LLM request failed:', err);
             throw err;
