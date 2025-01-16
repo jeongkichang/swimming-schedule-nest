@@ -1,17 +1,12 @@
 import { Controller, Get } from '@nestjs/common';
-import { DbService } from '@libs/db';
-import { Collection } from 'mongodb';
+import { WebService } from './web.service';
 
 @Controller()
 export class WebController {
-    constructor(private readonly dbService: DbService) {}
+    constructor(private readonly webService: WebService) {}
 
-    @Get()
-    async getData() {
-        const db = this.dbService.getDatabase();
-        const collection: Collection = db.collection('swimming_pool');
-
-        const data = await collection.find().toArray();
-        return { data };
+    @Get('available-swim')
+    async getAvailableSwim() {
+        return this.webService.getAvailableSwimSchedules();
     }
 }
