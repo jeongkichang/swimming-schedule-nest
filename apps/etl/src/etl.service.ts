@@ -15,7 +15,7 @@ export class EtlService {
         private readonly scraperService: ScraperService,
     ) {}
 
-    @Cron(CronExpression.EVERY_10_SECONDS)
+    // @Cron(CronExpression.EVERY_10_SECONDS)
     async handleCronJob() {
         this.logger.log('Running ETL Cron Job...');
 
@@ -46,7 +46,7 @@ export class EtlService {
                 for (const schedule of schedules) {
                     await dailySwimScheduleColl.insertOne({
                         ...schedule,
-                        sourceUrl: url,
+                        pool_code: result.code,
                         createdAt: new Date(),
                     });
                 }
