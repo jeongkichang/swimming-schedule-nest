@@ -61,6 +61,10 @@ export class EtlService {
 
     async crawlPoolData() {
         this.logger.log('Starting pool data crawling...');
+
+        const db = this.dbService.getDatabase();
+        const poolCollection = db.collection('pool_info');
+
         const allResults = [];
 
         let pageIndex = 1;
@@ -78,6 +82,17 @@ export class EtlService {
             });
 
             allResults.push(...extracted);
+
+            for (const item of extracted) {
+                const uniqueId = this.generatePoolId();
+                await poolCollection.insertOne({
+                    poolId: uniqueId,
+                    title: item.title,
+                    address: item.address,
+                    pbid: item.pbid,
+                    createdAt: new Date(),
+                });
+            }
 
             if (data.length === 0) {
                 this.logger.log('No more data found. Stopping.');
@@ -98,5 +113,17 @@ export class EtlService {
 
     private delay(ms: number) {
         return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    private generatePoolId(): string {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+
+        const randomNumber = Math.floor(Math.random() * 0x10000);
+        const hexPart = randomNumber.toString(16).padStart(4, '0');
+
+        return `s${year}${month}${day}${hexPart}`;
     }
 }

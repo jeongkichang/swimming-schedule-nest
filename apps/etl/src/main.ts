@@ -8,6 +8,6 @@ async function bootstrap() {
 
     const etlService = app.get(EtlService);
     // await etlService.handleCronJob();
-    await etlService.crawlPoolData();
+    // await etlService.crawlPoolData();
 }
 bootstrap();
