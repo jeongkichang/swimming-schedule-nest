@@ -126,4 +126,26 @@ export class EtlService {
 
         return `s${year}${month}${day}${hexPart}`;
     }
+
+    async copySeoulPools() {
+        this.logger.log('Starting copySeoulPools...');
+
+        const db = this.dbService.getDatabase();
+        const poolCollection: Collection = db.collection('pool_info');
+        const seoulCollection: Collection = db.collection('seoul_pool_info');
+
+        const poolDocs = await poolCollection.find({}).toArray();
+        this.logger.log(`Found ${poolDocs.length} docs in pool_info`);
+
+        for (const doc of poolDocs) {
+            if (doc.address && doc.address.includes('서울')) {
+                delete doc._id;
+
+                await seoulCollection.insertOne(doc);
+                this.logger.log(`Inserted doc with pbid=${doc.pbid} into seoul_pool_info`);
+            }
+        }
+
+        this.logger.log('copySeoulPools completed.');
+    }
 }
