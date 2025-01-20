@@ -10,5 +10,6 @@ async function bootstrap() {
     // await etlService.handleCronJob();
     // await etlService.crawlPoolData();
     // await etlService.copySeoulPools();
+    // await etlService.refineSeoulPoolsInfo();
 }
 bootstrap();

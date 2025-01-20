@@ -148,4 +148,83 @@ export class EtlService {
 
         this.logger.log('copySeoulPools completed.');
     }
+
+    async refineSeoulPoolsInfo(): Promise<void> {
+        this.logger.log('Starting refineSeoulPoolsInfo...');
+
+        const db = this.dbService.getDatabase();
+        const seoulCollection: Collection = db.collection('seoul_pool_info');
+        const dailySwimScheduleColl: Collection = db.collection('daily_swim_schedule');
+
+        const seoulDocs = await seoulCollection.find({}).toArray();
+        this.logger.log(`Found ${seoulDocs.length} docs in seoul_pool_info`);
+
+        for (const doc of seoulDocs) {
+            if (!doc.pbid) {
+                this.logger.warn(`Skipping doc without pbid: ${JSON.stringify(doc)}`);
+                continue;
+            }
+
+            const detailUrl = `${process.env.CRAWLING_TARGET_DETAIL_URL}?pbid=${doc.pbid}`;
+
+            let removedHtml: string;
+            try {
+                removedHtml = await this.scraperService.fetchAndExtractText(detailUrl);
+            } catch (err) {
+                this.logger.error(`Failed to scrape detail URL=${detailUrl}`, err);
+                continue;
+            }
+
+            let refined: string;
+            try {
+                refined = await this.llmService.refineSwimInfo(removedHtml);
+            } catch (err) {
+                this.logger.error(`Failed to refine info for doc with pbid=${doc.pbid}`, err);
+                continue;
+            }
+
+            this.logger.log(`Refined info for pbid=${doc.pbid} => ${refined}`);
+
+            let schedules: any;
+            try {
+                const cleanRefined = refined
+                    .trim()
+                    .replace(/^```json\s*/i, '')
+                    .replace(/\s*```$/, '');
+                schedules = JSON.parse(cleanRefined);
+            } catch (jsonError) {
+                this.logger.error(`Failed to parse LLM JSON for pbid=${doc.pbid}`, jsonError);
+                continue;
+            }
+
+            if (
+                (Array.isArray(schedules) && schedules.length === 0) ||
+                (typeof schedules === 'object' && Object.keys(schedules).length === 0)
+            ) {
+                this.logger.warn(`No data to insert (empty schedules) for pbid=${doc.pbid}`);
+            } else {
+                if (Array.isArray(schedules)) {
+                    for (const schedule of schedules) {
+                        await dailySwimScheduleColl.insertOne({
+                            ...schedule,
+                            pool_code: doc.poolId,
+                            createdAt: new Date(),
+                        });
+                    }
+                    this.logger.log(`Inserted ${schedules.length} schedules for pbid=${doc.pbid}`);
+                } else {
+                    await dailySwimScheduleColl.insertOne({
+                        ...schedules,
+                        pool_code: doc.poolId,
+                        createdAt: new Date(),
+                    });
+                    this.logger.log(`Inserted 1 schedule object for pbid=${doc.pbid}`);
+                }
+            }
+
+            await this.delay(2000);
+        }
+
+        this.logger.log('refineSeoulPoolsInfo completed.');
+    }
 }
