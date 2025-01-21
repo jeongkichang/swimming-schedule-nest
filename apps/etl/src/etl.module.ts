@@ -5,6 +5,7 @@ import { DbModule } from '@libs/db';
 import { LlmModule } from '@libs/llm';
 import { ScraperModule } from '@libs/scraper';
 import { EtlService } from './etl.service';
+import { OcrModule } from "@libs/ocr";
 
 @Module({
     imports: [
@@ -15,6 +16,7 @@ import { EtlService } from './etl.service';
         DbModule,
         LlmModule,
         ScraperModule,
+        OcrModule,
         ScheduleModule.forRoot(),
     ],
     providers: [EtlService],

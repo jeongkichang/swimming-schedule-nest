@@ -4,6 +4,7 @@ import { DbService } from '@libs/db';
 import { Collection } from 'mongodb';
 import {LlmService} from "@libs/llm";
 import {ScraperService} from "@libs/scraper";
+import {OcrService} from "@libs/ocr";
 
 @Injectable()
 export class EtlService {
@@ -13,6 +14,7 @@ export class EtlService {
         private readonly dbService: DbService,
         private readonly llmService: LlmService,
         private readonly scraperService: ScraperService,
+        private readonly ocrService: OcrService,
     ) {}
 
     // @Cron(CronExpression.EVERY_10_SECONDS)
@@ -226,5 +228,11 @@ export class EtlService {
         }
 
         this.logger.log('refineSeoulPoolsInfo completed.');
+    }
+
+    async getText() {
+        const imgUrl = '';
+        const text = await this.ocrService.recognizeKoreanText(imgUrl);
+        this.logger.log( { text } );
     }
 }
