@@ -48,16 +48,43 @@ export class LlmService {
     </content>
     `;
 
-        try {
-            const result = await this.model.generateContent(prompt);
+        const maxAttempts = 3;
+        let attempt = 0;
 
-            return result?.response?.text
-                ? result.response.text()
-                : 'No response text.';
+        while (attempt < maxAttempts) {
+            attempt++;
+            try {
+                const result = await this.model.generateContent(prompt);
 
-        } catch (err) {
-            this.logger.error('Gemini LLM request failed:', err);
-            throw err;
+                if (result?.response?.text) {
+                    return result.response.text();
+                } else {
+                    this.logger.warn('No response text in LLM result');
+                    return 'No response text.';
+                }
+            } catch (err) {
+                this.logger.error(`Gemini LLM request failed (attempt=${attempt}):`, err);
+
+                const errorMessage = String(err);
+                if (
+                    attempt < maxAttempts &&
+                    (errorMessage.includes('Too Many Requests') ||
+                        errorMessage.includes('429') ||
+                        errorMessage.includes('too many requests'))
+                ) {
+                    const delayMs = 2000;
+                    this.logger.warn(`Retrying LLM request in ${delayMs} ms...`);
+                    await this.delay(delayMs);
+                } else {
+                    throw err;
+                }
+            }
         }
+
+        throw new Error('Gemini LLM request failed after retries.');
+    }
+
+    private delay(ms: number) {
+        return new Promise<void>((resolve) => setTimeout(resolve, ms));
     }
 }
