@@ -185,6 +185,21 @@ export class EtlService {
                 continue;
             }
 
+            const prefixUrl = process.env.CRAWLING_TARGET_IMG_URL || '';
+            const imgTexts: string[] = [];
+            for (const src of imgSrcUrls) {
+                try {
+                    const fullImgUrl = prefixUrl + src;
+
+                    const ocrResult = await this.ocrService.recognizeKoreanText(fullImgUrl);
+
+                    imgTexts.push(ocrResult.data.text);
+                    this.logger.debug(`OCR Texts for pbid=${doc.pbid}: ${ocrResult.data.text}`);
+                } catch (err) {
+                    this.logger.error(`Failed to OCR image: ${src}`, err);
+                }
+            }
+
 
             let refined: string;
             try {
