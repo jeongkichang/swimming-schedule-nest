@@ -177,6 +177,15 @@ export class EtlService {
                 continue;
             }
 
+            let imgSrcUrls: string[];
+            try {
+                imgSrcUrls = await this.scraperService.fetchImageSrcInContainer(detailUrl);
+            } catch (err) {
+                this.logger.error(`Failed to fetch image src in container`, err);
+                continue;
+            }
+
+
             let refined: string;
             try {
                 refined = await this.llmService.refineSwimInfo(removedHtml);
