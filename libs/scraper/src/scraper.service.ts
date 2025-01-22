@@ -64,8 +64,15 @@ export class ScraperService {
         return url;
     }
 
-    async fetchPoolInfo(pageIndex: number = 1, searchInfo: string = ''): Promise<any> {
+    async fetchPoolInfo(pageIndex: number = 1, searchInfo: string = ''): Promise<{
+        title: string,
+        address: string,
+        pbid: string,
+    }[]> {
         const url = process.env.CRAWLING_TARGET_URL;
+        if (!url) {
+            throw new Error('CRAWLING_TARGET_URL is not defined in the environment variables.');
+        }
 
         const formData = new URLSearchParams();
         formData.append('searchInfo', searchInfo);

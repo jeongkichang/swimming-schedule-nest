@@ -21,7 +21,7 @@ export class WebService {
         const schedules = await scheduleCollection.find({ day: currentDayKorean }).toArray();
 
         const filtered = schedules.filter((schedule) => {
-            const timeRange = schedule.time_range;
+            const timeRange = schedule.time_range as string;
             const [startStr, endStr] = timeRange.split('-').map((t) => t.trim());
 
             const [startHour, startMin] = startStr.split(':').map(Number);
