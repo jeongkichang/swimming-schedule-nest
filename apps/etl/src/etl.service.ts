@@ -5,6 +5,8 @@ import { Collection } from 'mongodb';
 import {LlmService} from "@libs/llm";
 import {ScraperService} from "@libs/scraper";
 import {OcrService} from "@libs/ocr";
+import {plainToInstance} from "class-transformer";
+import {PoolInfoDto} from "@libs/dto";
 
 @Injectable()
 export class EtlService {
@@ -134,17 +136,19 @@ export class EtlService {
 
         const db = this.dbService.getDatabase();
         const poolCollection: Collection = db.collection('pool_info');
-        const seoulCollection: Collection = db.collection('seoul_pool_info');
+        const seoulCollection: Collection<PoolInfoDto> = db.collection<PoolInfoDto>('seoul_pool_info');
 
         const poolDocs = await poolCollection.find({}).toArray();
         this.logger.log(`Found ${poolDocs.length} docs in pool_info`);
 
-        for (const doc of poolDocs) {
-            if (doc.address && doc.address.includes('서울')) {
-                delete doc._id;
+        const poolInfoDtoList = plainToInstance(PoolInfoDto, poolDocs);
 
-                await seoulCollection.insertOne(doc);
-                this.logger.log(`Inserted doc with pbid=${doc.pbid} into seoul_pool_info`);
+        for (const poolInfoDto of poolInfoDtoList) {
+            if (poolInfoDto.address && poolInfoDto.address.includes('서울')) {
+                delete poolInfoDto._id;
+
+                await seoulCollection.insertOne(poolInfoDto);
+                this.logger.log(`Inserted doc with pbid=${poolInfoDto.pbid} into seoul_pool_info`);
             }
         }
 

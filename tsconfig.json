@@ -11,7 +11,9 @@
       "@libs/scraper": ["libs/scraper/src"],
       "@libs/scraper/*": ["libs/scraper/src/*"],
       "@libs/ocr": ["libs/ocr/src"],
-      "@libs/ocr/*": ["libs/ocr/src/*"]
+      "@libs/ocr/*": ["libs/ocr/src/*"],
+      "@libs/dto": ["libs/dto/src"],
+      "@libs/dto/*": ["libs/dto/src/*"],
     },
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
