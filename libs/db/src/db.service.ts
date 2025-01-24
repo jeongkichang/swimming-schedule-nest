@@ -4,7 +4,7 @@ import { MongoClient, Db } from 'mongodb';
 @Injectable()
 export class DbService implements OnModuleInit, OnModuleDestroy {
     private client: MongoClient;
-    private db: Db;
+    private db!: Db;
 
     constructor() {
         const uri = process.env.MONGO_URI;
