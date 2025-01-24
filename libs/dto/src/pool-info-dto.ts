@@ -6,8 +6,17 @@ export class PoolInfoDto {
     _id?: string;
 
     @Expose()
+    poolId?: string;
+
+    @Expose()
+    title?: string;
+
+    @Expose()
     address?: string;
 
     @Expose()
-    pbid?: number;
+    pbid?: string;
+
+    @Expose()
+    createdAt?: Date;
 }

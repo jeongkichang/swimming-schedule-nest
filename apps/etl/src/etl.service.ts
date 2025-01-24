@@ -2,11 +2,15 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { DbService } from '@libs/db';
 import { Collection } from 'mongodb';
-import {LlmService} from "@libs/llm";
-import {ScraperService} from "@libs/scraper";
-import {OcrService} from "@libs/ocr";
-import {plainToInstance} from "class-transformer";
-import {PoolInfoDto} from "@libs/dto";
+import { LlmService } from "@libs/llm";
+import { ScraperService } from "@libs/scraper";
+import { OcrService } from "@libs/ocr";
+import { PoolInfo } from '@libs/db/schemas/pool-info.schema';
+import { CollectionFactory } from "@libs/db/collection.factory";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+import {DailySwimSchedule} from "@libs/db/schemas/daily-swim-schedule.schema";
+import {SeoulPoolInfo} from "@libs/db/schemas/seoul-pool-info.schema";
 
 @Injectable()
 export class EtlService {
@@ -17,6 +21,16 @@ export class EtlService {
         private readonly llmService: LlmService,
         private readonly scraperService: ScraperService,
         private readonly ocrService: OcrService,
+        private readonly collectionFactory: CollectionFactory,
+
+        @InjectModel(PoolInfo.name)
+        private readonly poolInfoModel: Model<PoolInfo>,
+
+        @InjectModel(SeoulPoolInfo.name)
+        private readonly seoulPoolInfoModel: Model<SeoulPoolInfo>,
+
+        @InjectModel(DailySwimSchedule.name)
+        private readonly dailySwimScheduleModel: Model<DailySwimSchedule>,
     ) {}
 
     // @Cron(CronExpression.EVERY_10_SECONDS)
@@ -48,7 +62,7 @@ export class EtlService {
 
             if (Array.isArray(schedules)) {
                 for (const schedule of schedules) {
-                    await dailySwimScheduleColl.insertOne({
+                    await this.dailySwimScheduleModel.create({
                         ...schedule,
                         pool_code: result.code,
                         createdAt: new Date(),
@@ -65,9 +79,6 @@ export class EtlService {
 
     async crawlPoolData() {
         this.logger.log('Starting pool data crawling...');
-
-        const db = this.dbService.getDatabase();
-        const poolCollection = db.collection('pool_info');
 
         const allResults = [];
 
@@ -89,7 +100,7 @@ export class EtlService {
 
             for (const item of extracted) {
                 const uniqueId = this.generatePoolId();
-                await poolCollection.insertOne({
+                await this.poolInfoModel.create({
                     poolId: uniqueId,
                     title: item.title,
                     address: item.address,
@@ -134,21 +145,18 @@ export class EtlService {
     async copySeoulPools() {
         this.logger.log('Starting copySeoulPools...');
 
-        const db = this.dbService.getDatabase();
-        const poolCollection: Collection = db.collection('pool_info');
-        const seoulCollection: Collection<PoolInfoDto> = db.collection<PoolInfoDto>('seoul_pool_info');
-
-        const poolDocs = await poolCollection.find({}).toArray();
+        const poolDocs = await this.poolInfoModel.find().exec();
         this.logger.log(`Found ${poolDocs.length} docs in pool_info`);
 
-        const poolInfoDtoList = plainToInstance(PoolInfoDto, poolDocs);
+        for (let doc of poolDocs) {
+            const plainDoc = doc.toObject();
 
-        for (const poolInfoDto of poolInfoDtoList) {
-            if (poolInfoDto.address && poolInfoDto.address.includes('서울')) {
-                delete poolInfoDto._id;
+            if (plainDoc.address && plainDoc.address.includes('서울')) {
+                delete plainDoc._id;
 
-                await seoulCollection.insertOne(poolInfoDto);
-                this.logger.log(`Inserted doc with pbid=${poolInfoDto.pbid} into seoul_pool_info`);
+                await this.seoulPoolInfoModel.create(plainDoc);
+
+                this.logger.log(`Inserted doc with pbid=${plainDoc.pbid} into seoul_pool_info`);
             }
         }
 
