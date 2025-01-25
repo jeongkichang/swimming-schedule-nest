@@ -1,12 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DbService } from '@libs/db';
-import { Collection } from 'mongodb';
+import { InjectModel } from "@nestjs/mongoose";
+import { DailySwimSchedule } from "@libs/db/schemas/daily-swim-schedule.schema";
+import { Model } from "mongoose";
 
 @Injectable()
 export class WebService {
     private readonly logger = new Logger(WebService.name);
 
-    constructor(private readonly dbService: DbService) {}
+    constructor(
+        @InjectModel(DailySwimSchedule.name)
+        private readonly dailySwimScheduleModel: Model<DailySwimSchedule>,
+    ) {}
 
     async getAvailableSwimSchedules(): Promise<any[]> {
         const now = new Date();
@@ -15,10 +19,7 @@ export class WebService {
         const currentHour = now.getHours();
         const currentMinute = now.getMinutes();
 
-        const db = this.dbService.getDatabase();
-        const scheduleCollection: Collection = db.collection('daily_swim_schedule');
-
-        const schedules = await scheduleCollection.find({ day: currentDayKorean }).toArray();
+        const schedules = await this.dailySwimScheduleModel.find({ day: currentDayKorean }).exec();
 
         const filtered = schedules.filter((schedule) => {
             const timeRange = schedule.time_range as string;

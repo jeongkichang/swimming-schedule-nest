@@ -1,11 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DbService } from '@libs/db';
-import { Collection } from 'mongodb';
 import { LlmService } from "@libs/llm";
 import { ScraperService } from "@libs/scraper";
 import { OcrService } from "@libs/ocr";
 import { PoolInfo } from '@libs/db/schemas/pool-info.schema';
-import { CollectionFactory } from "@libs/db/collection.factory";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import {DailySwimSchedule} from "@libs/db/schemas/daily-swim-schedule.schema";
@@ -16,7 +13,6 @@ export class EtlService {
     private readonly logger = new Logger(EtlService.name);
 
     constructor(
-        private readonly dbService: DbService,
         private readonly llmService: LlmService,
         private readonly scraperService: ScraperService,
         private readonly ocrService: OcrService,
@@ -120,14 +116,9 @@ export class EtlService {
     async refineSeoulPoolsInfo(): Promise<void> {
         this.logger.log('Starting refineSeoulPoolsInfo...');
 
-        const db = this.dbService.getDatabase();
-        const seoulCollection: Collection = db.collection('seoul_pool_info');
-        const dailySwimScheduleColl: Collection = db.collection('daily_swim_schedule');
+        const seoulPoolDocs = await this.seoulPoolInfoModel.find().exec();
 
-        const seoulDocs = await seoulCollection.find({}).toArray();
-        this.logger.log(`Found ${seoulDocs.length} docs in seoul_pool_info`);
-
-        for (const doc of seoulDocs) {
+        for (const doc of seoulPoolDocs) {
             if (!doc.pbid) {
                 this.logger.warn(`Skipping doc without pbid: ${JSON.stringify(doc)}`);
                 continue;
@@ -197,7 +188,7 @@ export class EtlService {
             } else {
                 if (Array.isArray(schedules)) {
                     for (const schedule of schedules) {
-                        await dailySwimScheduleColl.insertOne({
+                        await this.dailySwimScheduleModel.create({
                             ...schedule,
                             pool_code: doc.poolId,
                             createdAt: new Date(),
@@ -205,7 +196,7 @@ export class EtlService {
                     }
                     this.logger.log(`Inserted ${schedules.length} schedules for pbid=${doc.pbid}`);
                 } else {
-                    await dailySwimScheduleColl.insertOne({
+                    await this.dailySwimScheduleModel.create({
                         ...schedules,
                         pool_code: doc.poolId,
                         createdAt: new Date(),
