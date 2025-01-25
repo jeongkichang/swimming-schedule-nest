@@ -11,6 +11,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import {DailySwimSchedule} from "@libs/db/schemas/daily-swim-schedule.schema";
 import {SeoulPoolInfo} from "@libs/db/schemas/seoul-pool-info.schema";
+import {SwimmingPool} from "@libs/db/schemas/swimming-pool.schema";
 
 @Injectable()
 export class EtlService {
@@ -21,7 +22,9 @@ export class EtlService {
         private readonly llmService: LlmService,
         private readonly scraperService: ScraperService,
         private readonly ocrService: OcrService,
-        private readonly collectionFactory: CollectionFactory,
+
+        @InjectModel(SwimmingPool.name)
+        private readonly swimmingPoolModel: Model<SwimmingPool>,
 
         @InjectModel(PoolInfo.name)
         private readonly poolInfoModel: Model<PoolInfo>,
@@ -37,13 +40,13 @@ export class EtlService {
     async handleCronJob() {
         this.logger.log('Running ETL Cron Job...');
 
-        const db = this.dbService.getDatabase();
-        const collection: Collection = db.collection('swimming_pool');
-        const dailySwimScheduleColl: Collection = db.collection('daily_swim_schedule');
+        const swimmingPoolDocs = await this.swimmingPoolModel.find().exec();
 
-        const results = await collection.find({}).toArray();
-        for (const result of results) {
-            const url = result.url;
+        for (const swimmingPoolDoc of swimmingPoolDocs) {
+            const url = swimmingPoolDoc.url;
+            if(!url) {
+                continue;
+            }
             const removedHtml = await this.scraperService.fetchAndExtractText(url);
             const refined = await this.llmService.refineSwimInfo(removedHtml);
             this.logger.debug(`Refined Info: ${refined}`);
@@ -64,7 +67,7 @@ export class EtlService {
                 for (const schedule of schedules) {
                     await this.dailySwimScheduleModel.create({
                         ...schedule,
-                        pool_code: result.code,
+                        pool_code: swimmingPoolDoc.code,
                         createdAt: new Date(),
                     });
                 }
