@@ -5,7 +5,6 @@ import { LlmService } from "@libs/llm";
 import { ScraperService } from "@libs/scraper";
 import { OcrService } from "@libs/ocr";
 import { PoolInfo } from '@libs/db/schemas/pool-info.schema';
-import { CollectionFactory } from "@libs/db/collection.factory";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import {DailySwimSchedule} from "@libs/db/schemas/daily-swim-schedule.schema";
