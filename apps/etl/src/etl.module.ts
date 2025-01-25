@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ScheduleModule } from '@nestjs/schedule';
 import { DbModule } from '@libs/db';
 import { LlmModule } from '@libs/llm';
 import { ScraperModule } from '@libs/scraper';
@@ -17,7 +16,6 @@ import { OcrModule } from "@libs/ocr";
         LlmModule,
         ScraperModule,
         OcrModule,
-        ScheduleModule.forRoot(),
     ],
     providers: [EtlService],
 })

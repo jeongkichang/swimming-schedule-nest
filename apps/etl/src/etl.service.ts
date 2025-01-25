@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { DbService } from '@libs/db';
 import { Collection } from 'mongodb';
 import { LlmService } from "@libs/llm";
@@ -11,7 +10,6 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import {DailySwimSchedule} from "@libs/db/schemas/daily-swim-schedule.schema";
 import {SeoulPoolInfo} from "@libs/db/schemas/seoul-pool-info.schema";
-import {SwimmingPool} from "@libs/db/schemas/swimming-pool.schema";
 
 @Injectable()
 export class EtlService {
@@ -23,9 +21,6 @@ export class EtlService {
         private readonly scraperService: ScraperService,
         private readonly ocrService: OcrService,
 
-        @InjectModel(SwimmingPool.name)
-        private readonly swimmingPoolModel: Model<SwimmingPool>,
-
         @InjectModel(PoolInfo.name)
         private readonly poolInfoModel: Model<PoolInfo>,
 
@@ -35,50 +30,6 @@ export class EtlService {
         @InjectModel(DailySwimSchedule.name)
         private readonly dailySwimScheduleModel: Model<DailySwimSchedule>,
     ) {}
-
-    // @Cron(CronExpression.EVERY_10_SECONDS)
-    async handleCronJob() {
-        this.logger.log('Running ETL Cron Job...');
-
-        const swimmingPoolDocs = await this.swimmingPoolModel.find().exec();
-
-        for (const swimmingPoolDoc of swimmingPoolDocs) {
-            const url = swimmingPoolDoc.url;
-            if(!url) {
-                continue;
-            }
-            const removedHtml = await this.scraperService.fetchAndExtractText(url);
-            const refined = await this.llmService.refineSwimInfo(removedHtml);
-            this.logger.debug(`Refined Info: ${refined}`);
-
-            let schedules = refined
-                .trim()
-                .replace(/^```json\s*/i, '')
-                .replace(/\s*```$/, '');
-
-            try {
-                schedules = JSON.parse(schedules);
-            } catch (parseError) {
-                this.logger.error(`Failed to parse LLM response: ${parseError}`);
-                continue;
-            }
-
-            if (Array.isArray(schedules)) {
-                for (const schedule of schedules) {
-                    await this.dailySwimScheduleModel.create({
-                        ...schedule,
-                        pool_code: swimmingPoolDoc.code,
-                        createdAt: new Date(),
-                    });
-                }
-                this.logger.log(`Inserted ${schedules.length} schedules for URL: ${url}`);
-            } else {
-                this.logger.warn(`LLM response is not an array: ${refined}`);
-            }
-        }
-
-        this.logger.log('ETL Cron Job completed.');
-    }
 
     async crawlPoolData() {
         this.logger.log('Starting pool data crawling...');
