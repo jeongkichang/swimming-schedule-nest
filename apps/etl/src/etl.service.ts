@@ -51,11 +51,11 @@ export class EtlService {
             for (const item of extracted) {
                 const uniqueId = this.generatePoolId();
                 await this.poolInfoModel.create({
-                    poolId: uniqueId,
+                    pool_code: uniqueId,
                     title: item.title,
                     address: item.address,
                     pbid: item.pbid,
-                    createdAt: new Date(),
+                    created_at: new Date(),
                 });
             }
 
@@ -190,16 +190,16 @@ export class EtlService {
                     for (const schedule of schedules) {
                         await this.dailySwimScheduleModel.create({
                             ...schedule,
-                            pool_code: doc.poolId,
-                            createdAt: new Date(),
+                            pool_code: doc.pool_code,
+                            created_at: new Date(),
                         });
                     }
                     this.logger.log(`Inserted ${schedules.length} schedules for pbid=${doc.pbid}`);
                 } else {
                     await this.dailySwimScheduleModel.create({
                         ...schedules,
-                        pool_code: doc.poolId,
-                        createdAt: new Date(),
+                        pool_code: doc.pool_code,
+                        created_at: new Date(),
                     });
                     this.logger.log(`Inserted 1 schedule object for pbid=${doc.pbid}`);
                 }
@@ -215,5 +215,46 @@ export class EtlService {
         const imgUrl = '';
         const text = await this.ocrService.recognizeKoreanText(imgUrl);
         this.logger.log( { text } );
+    }
+
+    async renamePoolFields() {
+        await this.poolInfoModel.updateMany(
+            {},
+            {
+                $rename: {
+                    poolId: 'pool_code',
+                    createdAt: 'created_at',
+                },
+            },
+        );
+
+        this.logger.log('Renamed fields (poolId -> pool_code, createdAt -> created_at) for all docs in pool_info');
+    }
+
+    async renameSeoulPoolFields() {
+        await this.seoulPoolInfoModel.updateMany(
+            {},
+            {
+                $rename: {
+                    poolId: 'pool_code',
+                    createdAt: 'created_at',
+                },
+            },
+        );
+
+        this.logger.log('Renamed fields (poolId -> pool_code, createdAt -> created_at) for all docs in seoul_pool_info');
+    }
+
+    async renameDailySwimScheduleFields() {
+        await this.dailySwimScheduleModel.updateMany(
+            {},
+            {
+                $rename: {
+                    createdAt: 'created_at',
+                },
+            },
+        ).exec();
+
+        this.logger.log('Renamed fields (createdAt -> created_at) for all docs in daily_swim_schedule');
     }
 }

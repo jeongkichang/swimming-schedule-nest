@@ -23,6 +23,9 @@ export class DailySwimSchedule extends Document {
 
     @Prop()
     createdAt?: Date;
+
+    @Prop()
+    created_at?: Date;
 }
 
 export const DailySwimScheduleSchema = SchemaFactory.createForClass(DailySwimSchedule);
