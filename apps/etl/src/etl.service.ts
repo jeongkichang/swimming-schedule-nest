@@ -216,45 +216,4 @@ export class EtlService {
         const text = await this.ocrService.recognizeKoreanText(imgUrl);
         this.logger.log( { text } );
     }
-
-    async renamePoolFields() {
-        await this.poolInfoModel.updateMany(
-            {},
-            {
-                $rename: {
-                    poolId: 'pool_code',
-                    createdAt: 'created_at',
-                },
-            },
-        );
-
-        this.logger.log('Renamed fields (poolId -> pool_code, createdAt -> created_at) for all docs in pool_info');
-    }
-
-    async renameSeoulPoolFields() {
-        await this.seoulPoolInfoModel.updateMany(
-            {},
-            {
-                $rename: {
-                    poolId: 'pool_code',
-                    createdAt: 'created_at',
-                },
-            },
-        );
-
-        this.logger.log('Renamed fields (poolId -> pool_code, createdAt -> created_at) for all docs in seoul_pool_info');
-    }
-
-    async renameDailySwimScheduleFields() {
-        await this.dailySwimScheduleModel.updateMany(
-            {},
-            {
-                $rename: {
-                    createdAt: 'created_at',
-                },
-            },
-        ).exec();
-
-        this.logger.log('Renamed fields (createdAt -> created_at) for all docs in daily_swim_schedule');
-    }
 }
