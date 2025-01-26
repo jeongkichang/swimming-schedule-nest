@@ -4,7 +4,7 @@ import { Document } from 'mongoose';
 @Schema()
 export class SeoulPoolInfo extends Document {
     @Prop()
-    poolId?: string;
+    pool_code?: string;
 
     @Prop()
     title?: string;
@@ -16,7 +16,7 @@ export class SeoulPoolInfo extends Document {
     pbid?: string;
 
     @Prop()
-    createdAt?: Date;
+    created_at?: Date;
 }
 
 export const SeoulPoolInfoSchema = SchemaFactory.createForClass(SeoulPoolInfo);

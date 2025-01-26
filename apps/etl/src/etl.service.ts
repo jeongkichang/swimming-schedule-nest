@@ -51,11 +51,11 @@ export class EtlService {
             for (const item of extracted) {
                 const uniqueId = this.generatePoolId();
                 await this.poolInfoModel.create({
-                    poolId: uniqueId,
+                    pool_code: uniqueId,
                     title: item.title,
                     address: item.address,
                     pbid: item.pbid,
-                    createdAt: new Date(),
+                    created_at: new Date(),
                 });
             }
 
@@ -190,16 +190,16 @@ export class EtlService {
                     for (const schedule of schedules) {
                         await this.dailySwimScheduleModel.create({
                             ...schedule,
-                            pool_code: doc.poolId,
-                            createdAt: new Date(),
+                            pool_code: doc.pool_code,
+                            created_at: new Date(),
                         });
                     }
                     this.logger.log(`Inserted ${schedules.length} schedules for pbid=${doc.pbid}`);
                 } else {
                     await this.dailySwimScheduleModel.create({
                         ...schedules,
-                        pool_code: doc.poolId,
-                        createdAt: new Date(),
+                        pool_code: doc.pool_code,
+                        created_at: new Date(),
                     });
                     this.logger.log(`Inserted 1 schedule object for pbid=${doc.pbid}`);
                 }
