@@ -2,11 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { LlmService } from "@libs/llm";
 import { ScraperService } from "@libs/scraper";
 import { OcrService } from "@libs/ocr";
-import { PoolInfo } from '@libs/db/schemas/pool-info.schema';
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import {DailySwimSchedule} from "@libs/db/schemas/daily-swim-schedule.schema";
-import {SeoulPoolInfo} from "@libs/db/schemas/seoul-pool-info.schema";
+import { DailySwimSchedule } from "@libs/db/schemas/daily-swim-schedule.schema";
+import { SeoulPoolInfo } from "@libs/db/schemas/seoul-pool-info.schema";
 
 @Injectable()
 export class EtlService {
@@ -16,9 +15,6 @@ export class EtlService {
         private readonly llmService: LlmService,
         private readonly scraperService: ScraperService,
         private readonly ocrService: OcrService,
-
-        @InjectModel(PoolInfo.name)
-        private readonly poolInfoModel: Model<PoolInfo>,
 
         @InjectModel(SeoulPoolInfo.name)
         private readonly seoulPoolInfoModel: Model<SeoulPoolInfo>,
@@ -41,27 +37,6 @@ export class EtlService {
         const hexPart = randomNumber.toString(16).padStart(4, '0');
 
         return `s${year}${month}${day}${hexPart}`;
-    }
-
-    async copySeoulPools() {
-        this.logger.log('Starting copySeoulPools...');
-
-        const poolDocs = await this.poolInfoModel.find().exec();
-        this.logger.log(`Found ${poolDocs.length} docs in pool_info`);
-
-        for (let doc of poolDocs) {
-            const plainDoc = doc.toObject();
-
-            if (plainDoc.address && plainDoc.address.includes('서울')) {
-                delete plainDoc._id;
-
-                await this.seoulPoolInfoModel.create(plainDoc);
-
-                this.logger.log(`Inserted doc with pbid=${plainDoc.pbid} into seoul_pool_info`);
-            }
-        }
-
-        this.logger.log('copySeoulPools completed.');
     }
 
     async refineSeoulPoolsInfo(): Promise<void> {
