@@ -27,55 +27,6 @@ export class EtlService {
         private readonly dailySwimScheduleModel: Model<DailySwimSchedule>,
     ) {}
 
-    async crawlPoolData() {
-        this.logger.log('Starting pool data crawling...');
-
-        const allResults = [];
-
-        let pageIndex = 1;
-        let hasMoreData = true;
-
-        while (hasMoreData) {
-            const data = await this.scraperService.fetchPoolInfo(pageIndex);
-
-            const extracted = data.map((item) => {
-                return {
-                    title: item.title,
-                    address: item.address,
-                    pbid: item.pbid,
-                };
-            });
-
-            allResults.push(...extracted);
-
-            for (const item of extracted) {
-                const uniqueId = this.generatePoolId();
-                await this.poolInfoModel.create({
-                    pool_code: uniqueId,
-                    title: item.title,
-                    address: item.address,
-                    pbid: item.pbid,
-                    created_at: new Date(),
-                });
-            }
-
-            if (data.length === 0) {
-                this.logger.log('No more data found. Stopping.');
-                hasMoreData = false;
-            } else {
-                pageIndex++;
-            }
-            if (pageIndex > 94) {
-                this.logger.warn('Reached page limit. Stopping...');
-                hasMoreData = false;
-            }
-
-            await this.delay(2000);
-        }
-
-        this.logger.log('Completed pool data crawling.');
-    }
-
     private delay(ms: number) {
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
