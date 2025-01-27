@@ -63,34 +63,4 @@ export class ScraperService {
         }
         return url;
     }
-
-    async fetchAndExtractOriginUpdateAtText(url: string): Promise<string> {
-        const validUrl = this.validateUrl(url);
-        let responseText = '';
-
-        try {
-            const response = await axios.get(validUrl);
-            responseText = response.data;
-        } catch (err) {
-            this.logger.error(`Failed to fetch URL: ${validUrl}`, err);
-            throw err;
-        }
-
-        const $ = cheerio.load(responseText);
-
-        ['script', 'style', 'head', 'title'].forEach((selector) => {
-            $(selector).remove();
-        });
-
-        const pageText = $('body').text();
-
-        const match = pageText.match(/업데이트 : \s*(.+)/);
-
-        if (match && match[1]) {
-            const line = match[1].split('\n')[0].trim();
-            return line;
-        }
-
-        return '';
-    }
 }

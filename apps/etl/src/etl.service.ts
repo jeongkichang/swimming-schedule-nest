@@ -142,42 +142,4 @@ export class EtlService {
         const text = await this.ocrService.recognizeKoreanText(imgUrl);
         this.logger.log( { text } );
     }
-
-    async addOriginUpdatedAtInCrawledData() {
-        this.logger.log('Starting addOriginUpdatedAtInCrawledData...');
-
-        const seoulPoolDocs = await this.seoulPoolInfoModel.find().exec();
-
-        for (const doc of seoulPoolDocs) {
-            if (!doc.pbid) {
-                this.logger.warn(`Skipping doc without pbid: ${JSON.stringify(doc)}`);
-                continue;
-            }
-
-            const detailUrl = `${process.env.CRAWLING_TARGET_DETAIL_URL}?pbid=${doc.pbid}`;
-
-            let sourceUpdatedAt: string;
-            try {
-                sourceUpdatedAt = await this.scraperService.fetchAndExtractOriginUpdateAtText(detailUrl);
-            } catch (err) {
-                this.logger.error(`Failed to scrape detail URL=${detailUrl}`, err);
-                continue;
-            }
-
-            this.logger.log(`soruceUpdatedAt for pbid=${doc.pbid} => ${sourceUpdatedAt}`);
-
-            if( sourceUpdatedAt ) {
-                await this.seoulPoolInfoModel.updateOne(
-                    { pbid: doc.pbid },
-                    { $set: { source_updated_at: sourceUpdatedAt } }
-                );
-            } else {
-                this.logger.log(`no soruceUpdatedAt : pbid=${doc.pbid}`);
-            }
-
-            await this.delay(2000);
-        }
-
-        this.logger.log('addOriginUpdatedAtInCrawledData completed.');
-    }
 }
