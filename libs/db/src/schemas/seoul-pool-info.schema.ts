@@ -17,6 +17,9 @@ export class SeoulPoolInfo extends Document {
 
     @Prop()
     created_at?: Date;
+
+    @Prop()
+    source_updated_at?: Date;
 }
 
 export const SeoulPoolInfoSchema = SchemaFactory.createForClass(SeoulPoolInfo);
