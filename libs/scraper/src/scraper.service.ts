@@ -63,34 +63,4 @@ export class ScraperService {
         }
         return url;
     }
-
-    async fetchPoolInfo(pageIndex: number = 1, searchInfo: string = ''): Promise<{
-        title: string,
-        address: string,
-        pbid: string,
-    }[]> {
-        const url = process.env.CRAWLING_TARGET_URL;
-        if (!url) {
-            throw new Error('CRAWLING_TARGET_URL is not defined in the environment variables.');
-        }
-
-        const formData = new URLSearchParams();
-        formData.append('searchInfo', searchInfo);
-        formData.append('pageIndex', pageIndex.toString());
-
-        try {
-            const response = await axios.post(url, formData.toString(), {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-            });
-
-            this.logger.log(`Fetched data for pageIndex=${pageIndex}, count=${response.data.data?.length ?? 0}`);
-            return response.data.data;
-        } catch (error) {
-            this.logger.error(`Error fetching pool info for pageIndex=${pageIndex}`, error);
-            throw error;
-        }
-    }
-
 }
