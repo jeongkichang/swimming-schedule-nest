@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { PoolInfo, PoolInfoSchema } from './schemas/pool-info.schema';
 import { DailySwimSchedule, DailySwimScheduleSchema } from "@libs/db/schemas/daily-swim-schedule.schema";
 import { SeoulPoolInfo, SeoulPoolInfoSchema } from "@libs/db/schemas/seoul-pool-info.schema";
 import { ConfigModule, ConfigService } from "@nestjs/config";
@@ -19,11 +18,6 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
             inject: [ConfigService],
         }),
         MongooseModule.forFeature([
-            {
-                name: PoolInfo.name,
-                schema: PoolInfoSchema,
-                collection: 'pool_info'
-            },
             {
                 name: SeoulPoolInfo.name,
                 schema: SeoulPoolInfoSchema,
