@@ -18,9 +18,12 @@ export class LlmService {
         this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     }
 
-    async refineSwimInfo(removedHtml: string): Promise<string> {
+    async refineSwimInfo(removedHtml: string, ocrImgText: string): Promise<string> {
         const prompt = `
-    <content></content> 내용을 참고해서 자유 수영에 대한 정보를 정리해줘.
+    <content></content> 내용과 <ocrImgText></ocrImgText> 내용을 참고해서 자유 수영에 대한 정보를 정리해줘.
+    <content></content>의 내용은 특정 페이지에서 html 태그를 모두 제거하고, 텍스트만 추출한 내용이야.
+    <ocrImgText></ocrImgText>의 내용은 ocr을 이용해서 이미지에서 텍스트를 추출한 내용이야. 오타가 있을 수 있어.
+    
     자유 수영은 일일 수영이라고 표현되기도 하는 부분을 참고해.
     1회 이용에 대한 정보만 정리해줘.
     보통, 1회 이용료는 20,000원이 넘지 않아. 그것들은 제외해줘.
@@ -46,6 +49,9 @@ export class LlmService {
     <content>
     ${removedHtml}
     </content>
+    <ocrImgText>
+    ${ocrImgText}
+    </ocrImgText>
     `;
 
         const maxAttempts = 3;
