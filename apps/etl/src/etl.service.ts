@@ -83,10 +83,11 @@ export class EtlService {
                 }
             }
 
+            const combinedImgText = imgTexts.join('\n');
 
             let refined: string;
             try {
-                refined = await this.llmService.refineSwimInfo(removedHtml);
+                refined = await this.llmService.refineSwimInfo(removedHtml, combinedImgText);
             } catch (err) {
                 this.logger.error(`Failed to refine info for doc with pbid=${doc.pbid}`, err);
                 continue;
