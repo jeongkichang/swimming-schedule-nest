@@ -22,9 +22,6 @@ export class DailySwimSchedule extends Document {
     pool_code?: string;
 
     @Prop()
-    createdAt?: Date;
-
-    @Prop()
     created_at?: Date;
 }
 
