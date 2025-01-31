@@ -20,6 +20,26 @@ export class SeoulPoolInfo extends Document {
 
     @Prop()
     source_updated_at?: Date;
+
+    @Prop({
+        type: {
+            type: String,
+            enum: ['Point'],
+            required: true,
+            default: 'Point',
+        },
+        coordinates: {
+            type: [Number],
+            required: true,
+            default: [0, 0],
+        },
+    })
+    location?: {
+        type: 'Point';
+        coordinates: [number, number]; // [lng, lat]
+    };
 }
 
 export const SeoulPoolInfoSchema = SchemaFactory.createForClass(SeoulPoolInfo);
+
+SeoulPoolInfoSchema.index({ location: '2dsphere' });
