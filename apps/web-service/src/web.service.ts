@@ -19,12 +19,29 @@ export class WebService {
         const currentHour = now.getHours();
         const currentMinute = now.getMinutes();
 
-        const schedules = await this.dailySwimScheduleModel.find({ day: currentDayKorean }).exec();
+        let results = await this.dailySwimScheduleModel.aggregate([
+            {
+                $match: { day: currentDayKorean }
+            },
+            {
+                $lookup: {
+                    from: 'seoul_pool_info',
+                    localField: 'pool_code',
+                    foreignField: 'pool_code',
+                    as: 'poolInfo'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$poolInfo',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+        ]);
 
-        const filtered = schedules.filter((schedule) => {
-            const timeRange = schedule.time_range as string;
-            const [startStr, endStr] = timeRange.split('-').map((t) => t.trim());
-
+        results = results.filter((doc: any) => {
+            if (!doc.time_range) return false;
+            const [startStr] = doc.time_range.split('-').map((t: string) => t.trim());
             const [startHour, startMin] = startStr.split(':').map(Number);
 
             const nowInMinutes = currentHour * 60 + currentMinute;
@@ -33,7 +50,18 @@ export class WebService {
             return nowInMinutes <= startInMinutes;
         });
 
-        this.logger.log(`Found ${filtered.length} schedules for day=${currentDayKorean} after ${currentHour}:${currentMinute}`);
-        return filtered;
+        const output = results.map((doc: any) => ({
+            day: doc.day,
+            time_range: doc.time_range,
+            adult_fee: doc.adult_fee,
+            teen_fee: doc.teen_fee,
+            child_fee: doc.child_fee,
+            pool_code: doc.pool_code,
+            title: doc.poolInfo?.title,
+            address: doc.poolInfo?.address,
+        }));
+
+        this.logger.log(`Found ${output.length} schedules for ${currentDayKorean} after ${currentHour}:${currentMinute}`);
+        return output;
     }
 }
