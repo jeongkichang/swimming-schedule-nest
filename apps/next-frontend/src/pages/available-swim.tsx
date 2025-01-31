@@ -19,7 +19,7 @@ export default function AvailableSwimPage({ schedules }: { schedules: any[] }) {
                 <ul>
                     {schedules.map((sch, idx) => (
                         <li key={idx}>
-                            {sch.day} {sch.time_range} - Adult fee: {sch.adult_fee}, Teen fee: {sch.teen_fee}
+                            {sch.title} ({sch.address}) {sch.day} {sch.time_range} - 성인: {sch.adult_fee}, 청소년: {sch.teen_fee}
                         </li>
                     ))}
                 </ul>
