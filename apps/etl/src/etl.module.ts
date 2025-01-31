@@ -5,7 +5,6 @@ import { LlmModule } from '@libs/llm';
 import { ScraperModule } from '@libs/scraper';
 import { EtlService } from './etl.service';
 import { OcrModule } from "@libs/ocr";
-import { MapModule } from "@libs/map";
 
 @Module({
     imports: [
@@ -17,7 +16,6 @@ import { MapModule } from "@libs/map";
         LlmModule,
         ScraperModule,
         OcrModule,
-        MapModule,
     ],
     providers: [EtlService],
 })

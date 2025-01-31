@@ -6,7 +6,6 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { DailySwimSchedule } from "@libs/db/schemas/daily-swim-schedule.schema";
 import { SeoulPoolInfo } from "@libs/db/schemas/seoul-pool-info.schema";
-import { MapService } from "@libs/map";
 
 @Injectable()
 export class EtlService {
@@ -16,7 +15,6 @@ export class EtlService {
         private readonly llmService: LlmService,
         private readonly scraperService: ScraperService,
         private readonly ocrService: OcrService,
-        private readonly mapService: MapService,
 
         @InjectModel(SeoulPoolInfo.name)
         private readonly seoulPoolInfoModel: Model<SeoulPoolInfo>,
@@ -144,33 +142,5 @@ export class EtlService {
         const imgUrl = '';
         const text = await this.ocrService.recognizeKoreanText(imgUrl);
         this.logger.log( { text } );
-    }
-
-    async updateLatLng(): Promise<void> {
-        const seoulPoolDocs = await this.seoulPoolInfoModel.find().exec();
-        for (const doc of seoulPoolDocs) {
-            if(!doc.address)  {
-                this.logger.log( `no exist address : pool_code ${doc.pool_code}` );
-                continue;
-            }
-            const { lng, lat } = await this.mapService.getLatLngWithNaver(doc.address);
-
-            await this.seoulPoolInfoModel.updateOne(
-                { pool_code: doc.pool_code },
-                {
-                    $set: {
-                        location: {
-                            type: 'Point',
-                            coordinates: [lng, lat],
-                        },
-                    },
-                },
-            );
-
-            this.logger.log( `completed updated : pool_code ${doc.pool_code} (${lng}, ${lat})` );
-
-            await this.delay(2000);
-        }
-        return;
     }
 }
