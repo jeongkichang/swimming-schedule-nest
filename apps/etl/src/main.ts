@@ -7,6 +7,6 @@ async function bootstrap() {
     await app.init();
 
     const etlService = app.get(EtlService);
-    await etlService.findSourceUrl();
+    await etlService.updateAddressToBeFullName();
 }
 bootstrap();
