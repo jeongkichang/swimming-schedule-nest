@@ -63,4 +63,20 @@ export class ScraperService {
         }
         return url;
     }
+
+    async fetchRawHtml(url: string): Promise<string> {
+        const validUrl = this.validateUrl(url);
+        let responseText = '';
+
+        try {
+            const response = await axios.get(validUrl);
+            responseText = response.data;
+        } catch (err) {
+            this.logger.error(`Failed to fetch URL: ${validUrl}`, err);
+            throw err;
+        }
+
+        // 불필요한 태그 제거 없이, 전체 HTML을 그대로 반환
+        return responseText;
+    }
 }
