@@ -7,6 +7,6 @@ async function bootstrap() {
     await app.init();
 
     const etlService = app.get(EtlService);
-    await etlService.updateAddressToBeFullName();
+    await etlService.deleteDailySwimScheduleByPbids();
 }
 bootstrap();

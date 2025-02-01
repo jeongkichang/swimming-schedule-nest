@@ -144,29 +144,63 @@ export class EtlService {
         this.logger.log( { text } );
     }
 
-    async updateAddressToBeFullName() {
-        const seoulPoolDocs = await this.seoulPoolInfoModel.find().exec();
+    private readonly deleteDailySwimSchedulesPbidList = [
+        '764',
+        '759',
+        '377',
+        '376',
+        '234',
+        '217',
+        '216',
+        '214',
+        '202',
+        '199',
+        '191',
+        '182',
+        '181',
+        '165',
+        '124',
+        '89',
+        '85',
+        '57',
+        '49',
+        '45',
+        '41',
+        '24',
+        '23',
+        '22',
+        '7',
+    ];
 
-        let updatedCount = 0;
+    async deleteDailySwimScheduleByPbids() {
+        for (const pbid of this.deleteDailySwimSchedulesPbidList) {
+            // 1) seoul_pool_info에서 해당 pbid로 문서를 찾는다.
+            const poolInfoDoc = await this.seoulPoolInfoModel.findOne({ pbid }).exec();
 
-        for (const doc of seoulPoolDocs) {
-            if (!doc.address) {
+            if (!poolInfoDoc) {
+                this.logger.warn(`No seoul_pool_info document found for pbid=${pbid}`);
                 continue;
             }
 
-            // (1) 기존 address에 "서울"이 있는지 확인
-            //     정규식 /서울/g -> 모든 "서울" 단어를 "서울특별시"로 바꿈
-            const newAddress = doc.address.replace(/서울/g, '서울특별시');
-
-            if (newAddress !== doc.address) {
-                // (2) 실제로 변경사항이 있다면 저장
-                doc.address = newAddress;
-                await doc.save();
-                updatedCount++;
-                this.logger.log(`Updated address for pool_code=${doc.pool_code} to ${doc.address}`);
+            if (!poolInfoDoc.pool_code) {
+                this.logger.warn(
+                    `No pool_code found in seoul_pool_info for pbid=${pbid}`,
+                );
+                continue;
             }
+
+            // 2) 찾은 pool_code에 해당하는 daily_swim_schedule 문서를 전부 삭제
+            const result = await this.dailySwimScheduleModel.deleteMany({
+                pool_code: poolInfoDoc.pool_code,
+            });
+
+            this.logger.log(
+                `Deleted ${result.deletedCount} daily_swim_schedule docs for pbid=${pbid}, pool_code=${poolInfoDoc.pool_code}`,
+            );
         }
 
-        this.logger.log('All docs updated successfully.');
+        this.logger.log(
+            `Finished deleteDailySwimScheduleByPbids. (target pbid count: ${this.deleteDailySwimSchedulesPbidList.length})`,
+        );
     }
 }
