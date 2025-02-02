@@ -38,6 +38,15 @@ export class SeoulPoolInfo extends Document {
         type: 'Point';
         coordinates: [number, number]; // [lng, lat]
     };
+
+    @Prop()
+    source_url_type?: string;
+
+    @Prop()
+    source_url?: string;
+
+    @Prop()
+    is_operating?: string;
 }
 
 export const SeoulPoolInfoSchema = SchemaFactory.createForClass(SeoulPoolInfo);
