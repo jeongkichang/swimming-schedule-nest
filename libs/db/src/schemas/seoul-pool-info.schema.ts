@@ -47,6 +47,12 @@ export class SeoulPoolInfo extends Document {
 
     @Prop()
     is_operating?: string;
+
+    @Prop()
+    available_daily_swimming?: string;
+
+    @Prop()
+    available_html_crawling?: string;
 }
 
 export const SeoulPoolInfoSchema = SchemaFactory.createForClass(SeoulPoolInfo);
