@@ -39,108 +39,43 @@ export class EtlService {
         return `s${year}${month}${day}${hexPart}`;
     }
 
-    async refineSeoulPoolsInfo(): Promise<void> {
-        this.logger.log('Starting refineSeoulPoolsInfo...');
+    /**
+     * @param rawText - 여러 줄로 된 원본 텍스트
+     */
+    async insertSeoulPoolInfoFromText(rawText: string): Promise<void> {
+        this.logger.log('Start: insertSeoulPoolInfoFromText');
 
-        const seoulPoolDocs = await this.seoulPoolInfoModel.find().exec();
+        // 줄 단위로 분리
+        const lines = rawText.split('\n').map(line => line.trim()).filter(line => line !== '');
 
-        for (const doc of seoulPoolDocs) {
-            if (!doc.pbid) {
-                this.logger.warn(`Skipping doc without pbid: ${JSON.stringify(doc)}`);
-                continue;
-            }
+        let successCount = 0;
+        let failureCount = 0;
 
-            const detailUrl = `${process.env.CRAWLING_TARGET_DETAIL_URL}?pbid=${doc.pbid}`;
-
-            let removedHtml: string;
+        for (const line of lines) {
             try {
-                removedHtml = await this.scraperService.fetchAndExtractText(detailUrl);
-            } catch (err) {
-                this.logger.error(`Failed to scrape detail URL=${detailUrl}`, err);
-                continue;
+                const [title, address, availableDailySwimming] = line
+                    .split(',')
+                    .map(item => item.trim());
+
+                // pool_code 자동 생성
+                const newPoolCode = this.generatePoolId();
+
+                await this.seoulPoolInfoModel.create({
+                    pool_code: newPoolCode,
+                    title,
+                    address,
+                    available_daily_swimming: availableDailySwimming,
+                    created_at: new Date(),
+                });
+
+                this.logger.debug(`Inserted: ${title} / ${address} / ADS=${availableDailySwimming} / pool_code=${newPoolCode}`);
+                successCount++;
+            } catch (error) {
+                this.logger.error(`Failed to insert line: ${line}`, error);
+                failureCount++;
             }
-
-            let imgSrcUrls: string[];
-            try {
-                imgSrcUrls = await this.scraperService.fetchImageSrcInContainer(detailUrl);
-            } catch (err) {
-                this.logger.error(`Failed to fetch image src in container`, err);
-                continue;
-            }
-
-            const prefixUrl = process.env.CRAWLING_TARGET_IMG_URL || '';
-            const imgTexts: string[] = [];
-            for (const src of imgSrcUrls) {
-                try {
-                    const fullImgUrl = prefixUrl + src;
-
-                    const ocrResult = await this.ocrService.recognizeKoreanText(fullImgUrl);
-
-                    imgTexts.push(ocrResult.data.text);
-                    this.logger.debug(`OCR Texts for pbid=${doc.pbid}: ${ocrResult.data.text}`);
-                } catch (err) {
-                    this.logger.error(`Failed to OCR image: ${src}`, err);
-                }
-            }
-
-            const combinedImgText = imgTexts.join('\n');
-
-            let refined: string;
-            try {
-                refined = await this.llmService.refineSwimInfo(removedHtml, combinedImgText);
-            } catch (err) {
-                this.logger.error(`Failed to refine info for doc with pbid=${doc.pbid}`, err);
-                continue;
-            }
-
-            this.logger.log(`Refined info for pbid=${doc.pbid} => ${refined}`);
-
-            let schedules: any;
-            try {
-                const cleanRefined = refined
-                    .trim()
-                    .replace(/^```json\s*/i, '')
-                    .replace(/\s*```$/, '');
-                schedules = JSON.parse(cleanRefined);
-            } catch (jsonError) {
-                this.logger.error(`Failed to parse LLM JSON for pbid=${doc.pbid}`, jsonError);
-                continue;
-            }
-
-            if (
-                (Array.isArray(schedules) && schedules.length === 0) ||
-                (typeof schedules === 'object' && Object.keys(schedules).length === 0)
-            ) {
-                this.logger.warn(`No data to insert (empty schedules) for pbid=${doc.pbid}`);
-            } else {
-                if (Array.isArray(schedules)) {
-                    for (const schedule of schedules) {
-                        await this.dailySwimScheduleModel.create({
-                            ...schedule,
-                            pool_code: doc.pool_code,
-                            created_at: new Date(),
-                        });
-                    }
-                    this.logger.log(`Inserted ${schedules.length} schedules for pbid=${doc.pbid}`);
-                } else {
-                    await this.dailySwimScheduleModel.create({
-                        ...schedules,
-                        pool_code: doc.pool_code,
-                        created_at: new Date(),
-                    });
-                    this.logger.log(`Inserted 1 schedule object for pbid=${doc.pbid}`);
-                }
-            }
-
-            await this.delay(2000);
         }
 
-        this.logger.log('refineSeoulPoolsInfo completed.');
-    }
-
-    async getText() {
-        const imgUrl = '';
-        const text = await this.ocrService.recognizeKoreanText(imgUrl);
-        this.logger.log( { text } );
+        this.logger.log(`Done: insertSeoulPoolInfoFromText - successCount=${successCount}, failureCount=${failureCount}`);
     }
 }
