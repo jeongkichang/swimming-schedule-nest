@@ -38,44 +38,4 @@ export class EtlService {
 
         return `s${year}${month}${day}${hexPart}`;
     }
-
-    /**
-     * @param rawText - 여러 줄로 된 원본 텍스트
-     */
-    async insertSeoulPoolInfoFromText(rawText: string): Promise<void> {
-        this.logger.log('Start: insertSeoulPoolInfoFromText');
-
-        // 줄 단위로 분리
-        const lines = rawText.split('\n').map(line => line.trim()).filter(line => line !== '');
-
-        let successCount = 0;
-        let failureCount = 0;
-
-        for (const line of lines) {
-            try {
-                const [title, address, availableDailySwimming] = line
-                    .split(',')
-                    .map(item => item.trim());
-
-                // pool_code 자동 생성
-                const newPoolCode = this.generatePoolId();
-
-                await this.seoulPoolInfoModel.create({
-                    pool_code: newPoolCode,
-                    title,
-                    address,
-                    available_daily_swimming: availableDailySwimming,
-                    created_at: new Date(),
-                });
-
-                this.logger.debug(`Inserted: ${title} / ${address} / ADS=${availableDailySwimming} / pool_code=${newPoolCode}`);
-                successCount++;
-            } catch (error) {
-                this.logger.error(`Failed to insert line: ${line}`, error);
-                failureCount++;
-            }
-        }
-
-        this.logger.log(`Done: insertSeoulPoolInfoFromText - successCount=${successCount}, failureCount=${failureCount}`);
-    }
 }
